@@ -84,7 +84,7 @@ namespace Actividad_Facultad.Data.Repositories
                     valor = article.Descripcion
                 }
             };
-            return DataHelper.GetInstance().ExcecuteSPCatchInt("SP_GUARDAR_ARTICULO", parameters);
+            return DataHelper.GetInstance().ExcecuteSPNonQuery("SP_GUARDAR_ARTICULO", parameters);
         }
     }
 }

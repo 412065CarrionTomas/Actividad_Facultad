@@ -27,6 +27,7 @@ namespace Actividad_Facultad.Data
             return _instance;
         }
 
+        //LECTURA DE DATOS EN TABLA
         public DataTable ExcecuteSPQuery(string sp, List<ParameterSP>? parametros = null)
         {
             DataTable dt = new DataTable();
@@ -56,9 +57,14 @@ namespace Actividad_Facultad.Data
             }
             return dt;
         }
-        public int ExcecuteSPCatchInt(string sp, List<ParameterSP>? parameters=null) 
+
+        //OBTENCION DE FILAS AFECTADAS
+        
+
+        //OBTENCION DE RETURN EN SP
+        public int ExcecuteSPNonQuery(string sp, List<ParameterSP>? parameters=null) 
         {
-            int resultForSave = -1;
+            int result = -1;
             try
             {
                 _connection.Open();
@@ -80,18 +86,25 @@ namespace Actividad_Facultad.Data
                 };
                 cmd.Parameters.Add(returnParameter);
                 cmd.ExecuteNonQuery();
-                resultForSave = (int)returnParameter.Value;
+                if(returnParameter != null)
+                {
+                    result = (int)returnParameter.Value;
+                }
+                else
+                {
+                    result = 1;
+                }
+                
             }
             catch(SqlException)
             {
-                resultForSave = -1;
+                result = -1;
             }
             finally
             {
                 _connection.Close();
             }
-            return resultForSave;
-
+            return result;
         }
     }
 }
