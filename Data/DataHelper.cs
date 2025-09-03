@@ -62,7 +62,7 @@ namespace Actividad_Facultad.Data
         
 
         //OBTENCION DE RETURN EN SP
-        public int ExcecuteSPNonQuery(string sp, List<ParameterSP>? parameters=null) 
+        public int ExcecuteSPCatchInt(string sp, List<ParameterSP>? parameters=null) 
         {
             int result = -1;
             try
@@ -86,15 +86,7 @@ namespace Actividad_Facultad.Data
                 };
                 cmd.Parameters.Add(returnParameter);
                 cmd.ExecuteNonQuery();
-                if(returnParameter != null)
-                {
-                    result = (int)returnParameter.Value;
-                }
-                else
-                {
-                    result = 1;
-                }
-                
+                result = (int)returnParameter.Value;
             }
             catch(SqlException)
             {
@@ -105,6 +97,37 @@ namespace Actividad_Facultad.Data
                 _connection.Close();
             }
             return result;
+        }
+
+        //OBTENCION DE FILAS AFECTADAS
+        public int ExecuteSPNoQuery(string sp, List<ParameterSP> parameter)
+        {
+            int resultado = 0;
+            try
+            {
+                _connection.Open();
+                var cmd = new SqlCommand(sp, _connection);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = sp;
+                if(parameter != null)
+                {
+                    foreach(ParameterSP param in parameter)
+                    {
+                        cmd.Parameters.AddWithValue(param.nombre, param.valor);
+                    }
+                }
+                resultado = cmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine("Error SQL: " + ex.Message);
+                resultado = 0;
+            }
+            finally
+            {
+                _connection.Close();
+            }
+            return resultado;
         }
     }
 }

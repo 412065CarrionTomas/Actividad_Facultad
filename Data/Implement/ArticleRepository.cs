@@ -22,8 +22,8 @@ namespace Actividad_Facultad.Data.Repositories
                 }
             };
 
-            var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_Articulo_Delete", parameters);
-            if(dt != null)
+            int resultado = DataHelper.GetInstance().ExecuteSPNoQuery("sp_Articulo_Delete", parameters);
+            if(resultado > 0)
             {
                 return true;
             }
@@ -35,22 +35,22 @@ namespace Actividad_Facultad.Data.Repositories
 
         public List<Article> GetAll()
         {
-            List<Article> lista = new List<Article>();
+            List<Article> article = new List<Article>();
             var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_Articulo_Get");
             foreach(DataRow row in dt.Rows)
             {
                 Article a = new Article();
                 a.ArticuloID = (int)row[0];
                 a.Descripcion = (string)row[1];
-                lista.Add(a);
+                article.Add(a);
             }
-            return lista;
+            return article;
             
         }
 
         public Article? GetById(int id)
         {
-            List<ParameterSP> parametro = new List<ParameterSP>()
+            List<ParameterSP> parameters = new List<ParameterSP>()
             {
                 new ParameterSP()
                 {
@@ -58,7 +58,7 @@ namespace Actividad_Facultad.Data.Repositories
                     valor = id
                 }
             };
-            var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_Articulo_Get", parametro);
+            var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_Articulo_Get", parameters);
             if(dt != null && dt.Rows.Count > 0)
             {
                 Article a = new Article();
@@ -84,7 +84,7 @@ namespace Actividad_Facultad.Data.Repositories
                     valor = article.Descripcion
                 }
             };
-            return DataHelper.GetInstance().ExcecuteSPNonQuery("SP_GUARDAR_ARTICULO", parameters);
+            return DataHelper.GetInstance().ExcecuteSPCatchInt("SP_GUARDAR_ARTICULO", parameters);
         }
     }
 }

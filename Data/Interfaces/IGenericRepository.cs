@@ -14,7 +14,7 @@ namespace Actividad_Facultad.Data.Interfaces
         //OBTENER POR ID
         T GetById(int id);
         //UPDATE OR INSERT
-        int Save(Article article);
+        int Save(T entity);
         //DELETE
         bool Delete(int id);
     }
