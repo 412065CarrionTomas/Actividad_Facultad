@@ -16,6 +16,6 @@ namespace Actividad_Facultad.Data.Interfaces
         //UPDATE OR INSERT
         int Save(T entity);
         //DELETE
-        bool Delete(int id);
+        int Delete(int id);
     }
 }

@@ -11,30 +11,30 @@ namespace Actividad_Facultad.Service
 {
     public class ArticleService
     {
-        private IGenericRepository<Article> _RepositoryArticle;
+        private IGenericRepository<Article> _ArticleRepository;
 
         public ArticleService()
         {
-            _RepositoryArticle = new ArticleRepository();
+            _ArticleRepository = new ArticleRepository();
         }
 
         public List<Article> GetArticles()
         {
-            return _RepositoryArticle.GetAll();
+            return _ArticleRepository.GetAll();
         }
 
         public Article? GetArticleById(int id)
         {
-            return _RepositoryArticle.GetById(id);
+            return _ArticleRepository.GetById(id);
         }
 
         public int articleSave(Article article1)
         {
-            return _RepositoryArticle.Save(article1);
+            return _ArticleRepository.Save(article1);
         }
-        public bool articleDelete(int id)
+        public int articleDelete(int id)
         {
-            return _RepositoryArticle.Delete(id);
+            return _ArticleRepository.Delete(id);
         }
     }
 }

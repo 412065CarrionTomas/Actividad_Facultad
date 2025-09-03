@@ -11,7 +11,7 @@ namespace Actividad_Facultad.Data.Repositories
 {
     internal class ArticleRepository : IGenericRepository<Article>
     {
-        public bool Delete(int id)
+        public int Delete(int id)
         {
             List<ParameterSP> parameters = new List<ParameterSP>()
             {
@@ -22,15 +22,8 @@ namespace Actividad_Facultad.Data.Repositories
                 }
             };
 
-            int resultado = DataHelper.GetInstance().ExecuteSPNoQuery("sp_Articulo_Delete", parameters);
-            if(resultado > 0)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return DataHelper.GetInstance().ExecuteSPNoQuery("sp_Articulo_Delete", parameters);
+            
         }
 
         public List<Article> GetAll()

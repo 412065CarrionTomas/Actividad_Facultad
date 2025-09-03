@@ -117,6 +117,7 @@ namespace Actividad_Facultad.Data
                     }
                 }
                 resultado = cmd.ExecuteNonQuery();
+                
             }
             catch (SqlException ex)
             {

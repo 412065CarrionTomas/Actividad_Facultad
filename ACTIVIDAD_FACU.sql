@@ -1,32 +1,4 @@
-create table Facturas(
-nroFactura INT IDENTITY(1,1) PRIMARY KEY,
-fecha date,
-formaPagoID int,
-cliente varchar(100)
-CONSTRAINT FK_forma_pago FOREIGN KEY (formaPagoID)
-	REFERENCES FormaPago(formaPagoID)
-);
-
-create table FormaPago(
-formaPagoID INT IDENTITY(1,1) PRIMARY KEY,
-descripcion varchar(100)
-);
-
-create table DetalleFactura(
-nroDetalle INT IDENTITY(1,1) PRIMARY KEY,
-nroFactura int,
-articuloID int,
-cantidad int
-CONSTRAINT fk_nroFactura FOREIGN KEY (nroFactura)
-	REFERENCES Facturas(nroFactura),
-CONSTRAINT fk_articulo FOREIGN KEY (articuloID)
-	REFERENCES Articulo(articuloID)
-);
-
-create table Articulo(
-articuloID INT IDENTITY(1,1) PRIMARY KEY,
-descripcion varchar(100)
-);
+USE Actividad1_5
 --------STORED PROCEDURE AVANZADO--------------
 --insertar facutra con su detalle
 
@@ -68,16 +40,6 @@ BEGIN
 END;
 
 --------STORED PROCEDURE CRUD-------------
-------------------FormaPago-----------------------
--- CREATE
-CREATE PROCEDURE sp_FormaPago_Insert
-    @descripcion VARCHAR(100)
-AS
-BEGIN
-    INSERT INTO FormaPago (descripcion) VALUES (@descripcion);
-END;
-GO
-
 -- READ (uno o todos)
 CREATE PROCEDURE sp_FormaPago_Get
     @formaPagoID INT = NULL
@@ -90,17 +52,7 @@ BEGIN
 END;
 GO
 
--- UPDATE
-CREATE PROCEDURE sp_FormaPago_Update
-    @formaPagoID INT,
-    @descripcion VARCHAR(100)
-AS
-BEGIN
-    UPDATE FormaPago
-    SET descripcion = @descripcion
-    WHERE formaPagoID = @formaPagoID;
-END;
-GO
+
 
 -- DELETE
 CREATE PROCEDURE sp_FormaPago_Delete
@@ -154,17 +106,7 @@ BEGIN
 END;
 GO
 ------------------Factura-----------------------
--- CREATE
-CREATE OR ALTER PROCEDURE sp_Factura_Insert
-    @fecha DATE,
-    @formaPagoID INT,
-    @cliente VARCHAR(100)
-AS
-BEGIN
-    INSERT INTO Facturas (fecha, formaPagoID, cliente)
-    VALUES (@fecha, @formaPagoID, @cliente);
-END;
-GO
+
 
 -- READ
 CREATE OR ALTER PROCEDURE sp_Factura_Get
@@ -178,21 +120,7 @@ BEGIN
 END;
 GO
 
--- UPDATE
-CREATE OR ALTER PROCEDURE sp_Factura_Update
-    @nroFactura INT,
-    @fecha DATE,
-    @formaPagoID INT,
-    @cliente VARCHAR(100)
-AS
-BEGIN
-    UPDATE Facturas
-    SET fecha = @fecha,
-        formaPagoID = @formaPagoID,
-        cliente = @cliente
-    WHERE nroFactura = @nroFactura;
-END;
-GO
+
 
 -- DELETE
 CREATE OR ALTER PROCEDURE sp_Factura_Delete
@@ -203,17 +131,6 @@ BEGIN
 END;
 GO
 ------------------DetalleFactura-----------------------
--- CREATE
-CREATE OR ALTER PROCEDURE sp_DetalleFactura_Insert
-    @nroFactura INT,
-    @articuloID INT,
-    @cantidad INT
-AS
-BEGIN
-    INSERT INTO DetalleFactura (nroFactura, articuloID, cantidad)
-    VALUES (@nroFactura, @articuloID, @cantidad);
-END;
-GO
 
 -- READ
 CREATE OR ALTER PROCEDURE sp_DetalleFactura_Get
@@ -224,20 +141,6 @@ BEGIN
         SELECT * FROM DetalleFactura;
     ELSE
         SELECT * FROM DetalleFactura WHERE nroDetalle = @nroDetalle;
-END;
-GO
-
--- UPDATE
-CREATE OR ALTER PROCEDURE sp_DetalleFactura_Update
-    @nroDetalle INT,
-    @articuloID INT,
-    @cantidad INT
-AS
-BEGIN
-    UPDATE DetalleFactura
-    SET articuloID = @articuloID,
-        cantidad = @cantidad
-    WHERE nroDetalle = @nroDetalle;
 END;
 GO
 
@@ -397,3 +300,35 @@ INSERT INTO DetalleFactura (nroFactura, articuloID, cantidad) VALUES (17, 5, 1);
 INSERT INTO DetalleFactura (nroFactura, articuloID, cantidad) VALUES (18, 9, 1);
 INSERT INTO DetalleFactura (nroFactura, articuloID, cantidad) VALUES (19, 10, 1);
 INSERT INTO DetalleFactura (nroFactura, articuloID, cantidad) VALUES (20, 8, 2);
+
+
+----CREACION DE TABLAS
+create table Facturas(
+nroFactura INT IDENTITY(1,1) PRIMARY KEY,
+fecha date,
+formaPagoID int,
+cliente varchar(100)
+CONSTRAINT FK_forma_pago FOREIGN KEY (formaPagoID)
+	REFERENCES FormaPago(formaPagoID)
+);
+
+create table FormaPago(
+formaPagoID INT IDENTITY(1,1) PRIMARY KEY,
+descripcion varchar(100)
+);
+
+create table DetalleFactura(
+nroDetalle INT IDENTITY(1,1) PRIMARY KEY,
+nroFactura int,
+articuloID int,
+cantidad int
+CONSTRAINT fk_nroFactura FOREIGN KEY (nroFactura)
+	REFERENCES Facturas(nroFactura),
+CONSTRAINT fk_articulo FOREIGN KEY (articuloID)
+	REFERENCES Articulo(articuloID)
+);
+
+create table Articulo(
+articuloID INT IDENTITY(1,1) PRIMARY KEY,
+descripcion varchar(100)
+);

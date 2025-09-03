@@ -13,7 +13,7 @@ namespace Actividad_Facultad.Data.Repositories
 {
     public class InvoiceRepository : IGenericRepository<Invoice>
     {
-        public bool Delete(int id)
+        public int Delete(int id)
         {
             List<ParameterSP> parameters = new List<ParameterSP>()
             {
@@ -23,15 +23,8 @@ namespace Actividad_Facultad.Data.Repositories
                     valor = id
                 }
             };
-            int result = DataHelper.GetInstance().ExecuteSPNoQuery("sp_Factura_Delete", parameters);
-            if(result != 0)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return DataHelper.GetInstance().ExecuteSPNoQuery("sp_Factura_Delete", parameters);
+            
         }
 
         public List<Invoice> GetAll()
