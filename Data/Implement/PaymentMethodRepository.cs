@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Actividad_Facultad.Data.Implement
 {
-    public class PaymentMethodRepository : IGenericRepository<PaymentMethod>
+    public class PaymentMethodRepository : IPaymentMethod
     {
         public int Delete(int id)
         {

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Actividad_Facultad.Data.Repositories
 {
-    internal class ArticleRepository : IGenericRepository<Article>
+    internal class ArticleRepository : IArticleRepository
     {
         public int Delete(int id)
         {

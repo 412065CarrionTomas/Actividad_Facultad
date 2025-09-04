@@ -11,7 +11,7 @@ namespace Actividad_Facultad.Service
 {
     public class PaymentMethodService
     {
-        IGenericRepository<PaymentMethod> _PaymentMethodService;
+        IPaymentMethod _PaymentMethodService;
         public PaymentMethodService()
         {
             _PaymentMethodService = new PaymentMethodRepository();

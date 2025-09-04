@@ -11,7 +11,7 @@ namespace Actividad_Facultad.Service
 {
     public class InvoiceServices
     {
-        IGenericRepository<Invoice> _InvoiceRepository;
+        IInvoiceRepository _InvoiceRepository;
 
         public InvoiceServices()
         {

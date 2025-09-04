@@ -1,4 +1,4 @@
-USE Actividad1_5
+    USE Actividad1_5
 --------STORED PROCEDURE AVANZADO--------------
 --insertar facutra con su detalle
 
@@ -108,17 +108,26 @@ GO
 ------------------Factura-----------------------
 
 
--- READ
-CREATE OR ALTER PROCEDURE sp_Factura_Get
+create or alter PROCEDURE [dbo].[sp_Factura_Get]
     @nroFactura INT = NULL
 AS
 BEGIN
     IF @nroFactura IS NULL
-        SELECT * FROM Facturas;
+        SELECT f.nroFactura,
+                f.cliente,
+                f.fecha,
+                fp.formaPagoID
+        FROM Facturas f
+        JOIN FormaPago fp ON fp.formaPagoID = f.formaPagoID;
     ELSE
-        SELECT * FROM Facturas WHERE nroFactura = @nroFactura;
+        SELECT f.nroFactura,
+                f.cliente,
+                f.fecha,
+                fp.formaPagoID 
+        FROM Facturas f
+        JOIN FormaPago fp ON fp.formaPagoID = f.formaPagoID
+        WHERE nroFactura = @nroFactura;
 END;
-GO
 
 
 
@@ -133,25 +142,23 @@ GO
 ------------------DetalleFactura-----------------------
 
 -- READ
-CREATE OR ALTER PROCEDURE sp_DetalleFactura_Get
+create or ALTER   PROCEDURE [dbo].[sp_DetalleFactura_Get]
     @nroDetalle INT = NULL
 AS
 BEGIN
     IF @nroDetalle IS NULL
-        SELECT * FROM DetalleFactura;
+        SELECT * 
+        FROM DetalleFactura df
+        JOIN Articulo a ON a.articuloID = df.articuloID
+        JOIN Facturas f ON f.nroFactura = df.nroDetalle;
     ELSE
-        SELECT * FROM DetalleFactura WHERE nroDetalle = @nroDetalle;
+        SELECT * 
+        FROM DetalleFactura df
+        JOIN Articulo a ON a.articuloID = df.articuloID
+        JOIN Facturas f ON f.nroFactura = df.nroDetalle
+        WHERE nroDetalle = @nroDetalle;
 END;
-GO
 
--- DELETE
-CREATE OR ALTER PROCEDURE sp_DetalleFactura_Delete
-    @nroDetalle INT
-AS
-BEGIN
-    DELETE FROM DetalleFactura WHERE nroDetalle = @nroDetalle;
-END;
-GO
 ------------
 create PROCEDURE [dbo].[SP_GUARDAR_FORMAPAGO]
     @formaPagoID INT = NULL,
@@ -234,7 +241,25 @@ BEGIN
     END
 END
 -----------------------
-
+--INSERTAR MAESTRO----------------
+create procedure [dbo].[sp_INSERTAR_MAESTRO]
+    @cliente varchar(100),
+    @formaPagoID int,
+    @nroFactura int output
+as
+begin
+    INSERT INTO Facturas(cliente,fecha,formaPagoID) VALUES(@cliente,GETDATE(),@formaPagoID)
+    SET @nroFactura=SCOPE_IDENTITY();
+END
+--INSERTAR DETALLLE------------
+CREATE PROCEDURE [dbo].[sp_INSERTAR_ALUMNO]
+    @nroFactura int,
+    @articuloID int,
+    @cantidad int
+as
+begin
+    INSERT INTO DetalleFactura(nroFactura,articuloID,cantidad)values(@nroFactura,@articuloID,@cantidad)
+end
 
 
 --------INSERT----------------

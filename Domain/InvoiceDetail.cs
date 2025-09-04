@@ -11,7 +11,7 @@ namespace Actividad_Facultad.Domain
     {
         public int nroDetalle { get; set; }
         public int nroFactura { get; set; }
-        public int articuloID { get; set; }
+        public Article article { get; set; }
         public int cantidad { get; set; }
     }
 }

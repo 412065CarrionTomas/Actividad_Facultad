@@ -1,5 +1,7 @@
-﻿using Actividad_Facultad.Data.Interfaces;
+﻿using Actividad_Facultad.Data.Implement;
+using Actividad_Facultad.Data.Interfaces;
 using Actividad_Facultad.Domain;
+using Actividad_Facultad.Service;
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
@@ -11,8 +13,24 @@ using System.Threading.Tasks;
 
 namespace Actividad_Facultad.Data.Repositories
 {
-    public class InvoiceRepository : IGenericRepository<Invoice>
+    public class InvoiceRepository : IInvoiceRepository
     {
+        private readonly SqlConnection _connection;
+        private readonly SqlTransaction _transaction;
+        private readonly UnitOfWork _unitOfWork;
+
+        public InvoiceRepository(UnitOfWork uof)
+        {
+            _unitOfWork = uof;
+        }
+
+        public InvoiceRepository(SqlConnection cnn, SqlTransaction t)
+        {
+            _connection = cnn;
+            _transaction = t;
+        }
+
+
         public int Delete(int id)
         {
             List<ParameterSP> parameters = new List<ParameterSP>()
@@ -33,12 +51,15 @@ namespace Actividad_Facultad.Data.Repositories
             var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_Factura_Get");
             foreach(DataRow row in dt.Rows) 
             {
-                Invoice i =  new Invoice()
+                Invoice i = new Invoice()
                 {
                     NroFactura = (int)row["nroFactura"],
                     Cliente = (string)row["cliente"],
                     Fecha = (DateTime)row["fecha"],
-                    FormaPagoID = (int)row["formaPagoID"],
+                    paymentMethod = new PaymentMethod()
+                    {
+                        FormaPagoID = (int)row["formaPagoID"]
+                    }
                 };
                 invoices.Add(i);
             }
@@ -65,7 +86,10 @@ namespace Actividad_Facultad.Data.Repositories
                         NroFactura = (int)row["nroFactura"],
                         Cliente = (string)row["cliente"],
                         Fecha = (DateTime)row["fecha"],
-                        FormaPagoID = (int)row["formaPagoID"],
+                        paymentMethod = new PaymentMethod()
+                        {
+                            FormaPagoID = (int)row["formaPagoID"]
+                        }
                     };
                 }
             }
@@ -74,7 +98,57 @@ namespace Actividad_Facultad.Data.Repositories
 
         public int Save(Invoice invoice)
         {
-            
+            int result = -1;
+            SqlConnection cnn = null;
+            SqlTransaction t = null;
+            try
+            {
+                cnn = DataHelper.GetConnection();
+                cnn.Open();
+                t = cnn.BeginTransaction();
+                var cmd = new SqlCommand("sp_INSERTAR_MAESTRO", cnn, t);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.AddWithValue("@cliente", invoice.Cliente); 
+                cmd.Parameters.AddWithValue("@formaPagoID", invoice.paymentMethod.FormaPagoID);
+                cmd.Parameters.AddWithValue("@nroFactura", invoice.NroFactura);
+                var param = new SqlParameter()
+                {
+                    ParameterName = "@nroFactura",
+                    Direction = ParameterDirection.Output,
+                    SqlDbType = SqlDbType.Int
+                };
+                cmd.Parameters.Add(param);
+                cmd.ExecuteNonQuery();
+                int invoiceDetailID = (int)param.Value;
+                foreach(var invoiceDetail in invoice.invoiceDetailsList)
+                {
+                    var cmdDetail = new SqlCommand("sp_INSERTAR_ALUMNO", cnn, t);
+                    cmdDetail.CommandType = CommandType.StoredProcedure;
+                    cmdDetail.Parameters.AddWithValue("@nroFactura", invoiceDetail.nroFactura);
+                    cmdDetail.Parameters.AddWithValue("@articuloID", invoiceDetail.article.ArticuloID);
+                    cmdDetail.Parameters.AddWithValue("@cantidad", invoiceDetail.cantidad);
+                    cmdDetail.ExecuteNonQuery();
+                }
+                t.Commit(); 
+            }
+            catch (SqlException e)
+            {
+                if (t != null)
+                {
+                    t.Rollback();
+                }
+                
+                return -1;
+            }
+            finally
+            {
+                if(cnn != null && cnn.State == ConnectionState.Open)
+                {
+                    cnn.Close();
+                }
+                cnn.Close();
+            }
+             
             List<ParameterSP> parameters = new List<ParameterSP>()
             {
                 new ParameterSP()
@@ -90,7 +164,7 @@ namespace Actividad_Facultad.Data.Repositories
                 new ParameterSP()
                 {
                     nombre = "@formaPagoID",
-                    valor = invoice.FormaPagoID
+                    valor = invoice.paymentMethod.FormaPagoID
                 },
                 new ParameterSP()
                 {

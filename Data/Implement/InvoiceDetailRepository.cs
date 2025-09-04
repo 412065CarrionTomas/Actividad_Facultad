@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Actividad_Facultad.Data.Implement
 {
-    public class InvoiceDetailRepository : IGenericRepository<InvoiceDetail>
+    public class InvoiceDetailRepository : IInvoiceDetailsRepository
     {
         public int Delete(int id)
         {
@@ -36,7 +36,10 @@ namespace Actividad_Facultad.Data.Implement
                 {
                     nroDetalle = (int)row["nroDetalle"],
                     nroFactura = (int)row["nroFactura"],
-                    articuloID = (int)row["articuloID"],
+                    article = new Article()
+                    {
+                        ArticuloID = (int)row["articuloID"]
+                    },
                     cantidad = (int)row["cantidad"]
                 };
                 invoiceDetails.Add(i);
@@ -61,7 +64,10 @@ namespace Actividad_Facultad.Data.Implement
                 {
                     nroDetalle = (int)dt.Rows[0]["nroDetalle"],
                     nroFactura = (int)dt.Rows[1]["nroFactura"],
-                    articuloID = (int)dt.Rows[2]["articuloID"],
+                    article = new Article()
+                    {
+                        ArticuloID = (int)dt.Rows[2]["articuloID"]
+                    },
                     cantidad = (int)dt.Rows[3]["cantidadID"]
                 };
                 return invoiceDetail;
@@ -86,7 +92,7 @@ namespace Actividad_Facultad.Data.Implement
                 new ParameterSP()
                 {
                     nombre = "@articuloID",
-                    valor = invoiceDetail.articuloID
+                    valor = invoiceDetail.article.ArticuloID
                 },
                 new ParameterSP()
                 {

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Runtime.InteropServices.ObjectiveC;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace Actividad_Facultad.Data
     public class DataHelper
     {
         private static DataHelper _instance;
-        private SqlConnection _connection;
+        private static SqlConnection _connection;
 
         private DataHelper()
         {
@@ -22,9 +23,14 @@ namespace Actividad_Facultad.Data
         {
             if(_instance == null)
             {
-                _instance = new DataHelper();
+                _instance = new DataHelper(); 
             }
             return _instance;
+        }
+        
+        public static SqlConnection GetConnection()
+        {
+            return _connection;
         }
 
         //LECTURA DE DATOS EN TABLA
@@ -57,6 +63,7 @@ namespace Actividad_Facultad.Data
             }
             return dt;
         }
+
 
         //OBTENCION DE FILAS AFECTADAS
         
@@ -129,6 +136,11 @@ namespace Actividad_Facultad.Data
                 _connection.Close();
             }
             return resultado;
+        }
+
+        public int ExcecuteSPQueryTransac(string sp, List<ParameterSP>? parametros = null, SqlTransaction t, object? parameterOut =null)
+        {
+            return 0;
         }
     }
 }

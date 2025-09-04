@@ -2,20 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Actividad_Facultad.Data.Interfaces
 {
-    public interface IGenericRepository<T> where T : class
+    public interface IInvoiceRepository
     {
-        //OBTENER LISTA
-        List<T> GetAll();
-        //OBTENER POR ID
-        T GetById(int id);
-        //UPDATE OR INSERT
-        int Save(T entity);
-        //DELETE
+        List<Invoice> GetAll();
+        Invoice GetById(int id);
+        int Save(Invoice invoice);
         int Delete(int id);
     }
 }

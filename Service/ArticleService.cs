@@ -11,7 +11,7 @@ namespace Actividad_Facultad.Service
 {
     public class ArticleService
     {
-        private IGenericRepository<Article> _ArticleRepository;
+        private IArticleRepository _ArticleRepository;
 
         public ArticleService()
         {
