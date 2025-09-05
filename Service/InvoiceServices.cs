@@ -1,4 +1,5 @@
-﻿using Actividad_Facultad.Data.Interfaces;
+﻿using Actividad_Facultad.Data;
+using Actividad_Facultad.Data.Interfaces;
 using Actividad_Facultad.Data.Repositories;
 using Actividad_Facultad.Domain;
 using System;
@@ -13,9 +14,9 @@ namespace Actividad_Facultad.Service
     {
         IInvoiceRepository _InvoiceRepository;
 
-        public InvoiceServices()
+        public InvoiceServices(UnitOfWork uof)
         {
-            _InvoiceRepository = new InvoiceRepository();
+            _InvoiceRepository = uof.InvoiceRepository;
         }
     }
 }

@@ -138,7 +138,7 @@ namespace Actividad_Facultad.Data
             return resultado;
         }
 
-        public int ExcecuteSPQueryTransac(string sp, List<ParameterSP>? parametros = null, SqlTransaction t, object? parameterOut =null)
+        public int ExcecuteSPQueryTransac(string sp, List<ParameterSP>? parametros, SqlTransaction t, object? parameterOut =null)
         {
             return 0;
         }

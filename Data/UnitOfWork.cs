@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data;
 
 namespace Actividad_Facultad.Data
 {
@@ -19,7 +20,7 @@ namespace Actividad_Facultad.Data
 
         public UnitOfWork()
         {
-            _connection = DataHelper.GetConnection();
+            _connection = new SqlConnection(Properties.Resources.ConnectionString);
             _connection.Open();
             _transaction = _connection.BeginTransaction();
         }
@@ -36,17 +37,69 @@ namespace Actividad_Facultad.Data
             }
         }
 
-        public void SaveChanges()
+        //TRANSACCION CON OUTPUT
+        public int SaveChangesWithOutput(string sp, List<ParameterSP>? parameterSPs, string outPutName)
         {
+            int result = -1;
             try
             {
-
-                _transaction.Commit();
+                using (var cmdMaestro = new SqlCommand(sp, _connection, _transaction))
+                {
+                    cmdMaestro.CommandType = CommandType.StoredProcedure;
+                    if (parameterSPs != null)
+                    {
+                        foreach (ParameterSP param in parameterSPs)
+                        {
+                            cmdMaestro.Parameters.AddWithValue(param.nombre, param.valor);
+                        }
+                    }
+                    var idOutput = new SqlParameter()
+                    {
+                        ParameterName = outPutName,
+                        Direction = ParameterDirection.Output,
+                        DbType = DbType.Int32
+                    };
+                    cmdMaestro.Parameters.Add(idOutput);
+                    cmdMaestro.ExecuteNonQuery();
+                    var idVariable = (int)idOutput.Value;
+                    if(idOutput.Value != DBNull.Value)
+                    {
+                        return idVariable;
+                    }
+                    else { return -1; }
+                }
             }
             catch (Exception)
             {
-                _transaction.Rollback();
+                throw;
             }
+        }
+
+        //TRANSACCION SIN DEVOLUCION
+        public int SaveChanges(string sp, List<ParameterSP>? parameters)
+        {
+            int result = -1;
+            try
+            {
+                using(var cmdAlumno = new SqlCommand(sp, _connection, _transaction))
+                {
+                    cmdAlumno.CommandType = CommandType.StoredProcedure;
+                    if(parameters != null)
+                    {
+                        foreach(ParameterSP param in parameters)
+                        {
+                            cmdAlumno.Parameters.AddWithValue(param.nombre, param.valor);
+                        }
+                    }
+                    result = cmdAlumno.ExecuteNonQuery();
+
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            return result;
         }
 
         public void Dispose()
@@ -60,6 +113,14 @@ namespace Actividad_Facultad.Data
                 _connection.Close();
                 _connection.Dispose();
             }
+        }
+        public void Commit()
+        {
+            _transaction.Commit();
+        }
+        public void Rollback()
+        {
+            _transaction.Rollback();
         }
     }
 }

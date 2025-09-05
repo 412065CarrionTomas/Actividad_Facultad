@@ -95,85 +95,138 @@ namespace Actividad_Facultad.Data.Repositories
             }
             return null;
         }
-
         public int Save(Invoice invoice)
         {
-            int result = -1;
-            SqlConnection cnn = null;
-            SqlTransaction t = null;
+            int idFactura = -1;
+            int resultOk = -1;
             try
             {
-                cnn = DataHelper.GetConnection();
-                cnn.Open();
-                t = cnn.BeginTransaction();
-                var cmd = new SqlCommand("sp_INSERTAR_MAESTRO", cnn, t);
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@cliente", invoice.Cliente); 
-                cmd.Parameters.AddWithValue("@formaPagoID", invoice.paymentMethod.FormaPagoID);
-                cmd.Parameters.AddWithValue("@nroFactura", invoice.NroFactura);
-                var param = new SqlParameter()
+                List<ParameterSP> paramInvoice = new List<ParameterSP>()
                 {
-                    ParameterName = "@nroFactura",
-                    Direction = ParameterDirection.Output,
-                    SqlDbType = SqlDbType.Int
+                    new ParameterSP()
+                    {
+                        nombre = "@formaPagoID",
+                        valor = invoice.paymentMethod.FormaPagoID
+                    },
+                    new ParameterSP()
+                    {
+                        nombre = "@cliente",
+                        valor = invoice.Cliente
+                    }
                 };
-                cmd.Parameters.Add(param);
-                cmd.ExecuteNonQuery();
-                int invoiceDetailID = (int)param.Value;
+                idFactura = _unitOfWork.SaveChangesWithOutput("sp_INSERTAR_MAESTRO", paramInvoice, "@nroFactura");
+
                 foreach(var invoiceDetail in invoice.invoiceDetailsList)
                 {
-                    var cmdDetail = new SqlCommand("sp_INSERTAR_ALUMNO", cnn, t);
-                    cmdDetail.CommandType = CommandType.StoredProcedure;
-                    cmdDetail.Parameters.AddWithValue("@nroFactura", invoiceDetail.nroFactura);
-                    cmdDetail.Parameters.AddWithValue("@articuloID", invoiceDetail.article.ArticuloID);
-                    cmdDetail.Parameters.AddWithValue("@cantidad", invoiceDetail.cantidad);
-                    cmdDetail.ExecuteNonQuery();
+                    List<ParameterSP> paramDetails = new List<ParameterSP>()
+                    {
+                        new ParameterSP()
+                        {
+                            nombre = "@nroFactura",
+                            valor = idFactura
+                        },
+                        new ParameterSP()
+                        {
+                            nombre = "@articuloID",
+                            valor = invoiceDetail.article.ArticuloID
+                        },
+                        new ParameterSP()
+                        {
+                            nombre = "@cantidad",
+                            valor = invoiceDetail.cantidad
+                        }
+                    };
+                    resultOk = _unitOfWork.SaveChanges("sp_INSERTAR_ALUMNO", paramDetails);
                 }
-                t.Commit(); 
-            }
-            catch (SqlException e)
-            {
-                if (t != null)
-                {
-                    t.Rollback();
-                }
-                
-                return -1;
-            }
-            finally
-            {
-                if(cnn != null && cnn.State == ConnectionState.Open)
-                {
-                    cnn.Close();
-                }
-                cnn.Close();
-            }
-             
-            List<ParameterSP> parameters = new List<ParameterSP>()
-            {
-                new ParameterSP()
-                {
-                    nombre = "@nroFactura",
-                    valor = invoice.NroFactura
-                },
-                new ParameterSP()
-                {
-                    nombre = "@fecha",
-                    valor = invoice.Fecha
-                },
-                new ParameterSP()
-                {
-                    nombre = "@formaPagoID",
-                    valor = invoice.paymentMethod.FormaPagoID
-                },
-                new ParameterSP()
-                {
-                    nombre = "@cliente",
-                    valor = invoice.Cliente
-                }
+                _unitOfWork.Commit();
+                return idFactura;
 
-            };
-            return DataHelper.GetInstance().ExcecuteSPCatchInt("SP_GUARDAR_FACTURA", parameters);
+            }
+            catch (Exception)
+            {
+                _unitOfWork.Rollback();
+                throw;
+            }
+            return idFactura;
         }
+        //public int Save(Invoice invoice)
+        //{
+        //    int result = -1;
+        //    SqlConnection cnn = null;
+        //    SqlTransaction t = null;
+        //    try
+        //    {
+        //        cnn = DataHelper.GetConnection();
+        //        cnn.Open();
+        //        t = cnn.BeginTransaction();
+        //        var cmd = new SqlCommand("sp_INSERTAR_MAESTRO", cnn, t);
+        //        cmd.CommandType = CommandType.StoredProcedure;
+        //        cmd.Parameters.AddWithValue("@cliente", invoice.Cliente); 
+        //        cmd.Parameters.AddWithValue("@formaPagoID", invoice.paymentMethod.FormaPagoID);
+        //        cmd.Parameters.AddWithValue("@nroFactura", invoice.NroFactura);
+        //        var param = new SqlParameter()
+        //        {
+        //            ParameterName = "@nroFactura",
+        //            Direction = ParameterDirection.Output,
+        //            SqlDbType = SqlDbType.Int
+        //        };
+        //        cmd.Parameters.Add(param);
+        //        cmd.ExecuteNonQuery();
+        //        int invoiceDetailID = (int)param.Value;
+        //        foreach(var invoiceDetail in invoice.invoiceDetailsList)
+        //        {
+        //            var cmdDetail = new SqlCommand("sp_INSERTAR_ALUMNO", cnn, t);
+        //            cmdDetail.CommandType = CommandType.StoredProcedure;
+        //            cmdDetail.Parameters.AddWithValue("@nroFactura", invoiceDetail.nroFactura);
+        //            cmdDetail.Parameters.AddWithValue("@articuloID", invoiceDetail.article.ArticuloID);
+        //            cmdDetail.Parameters.AddWithValue("@cantidad", invoiceDetail.cantidad);
+        //            cmdDetail.ExecuteNonQuery();
+        //        }
+        //        t.Commit(); 
+        //    }
+        //    catch (SqlException e)
+        //    {
+        //        if (t != null)
+        //        {
+        //            t.Rollback();
+        //        }
+                
+        //        return -1;
+        //    }
+        //    finally
+        //    {
+        //        if(cnn != null && cnn.State == ConnectionState.Open)
+        //        {
+        //            cnn.Close();
+        //        }
+        //        cnn.Close();
+        //    }
+             
+        //    List<ParameterSP> parameters = new List<ParameterSP>()
+        //    {
+        //        new ParameterSP()
+        //        {
+        //            nombre = "@nroFactura",
+        //            valor = invoice.NroFactura
+        //        },
+        //        new ParameterSP()
+        //        {
+        //            nombre = "@fecha",
+        //            valor = invoice.Fecha
+        //        },
+        //        new ParameterSP()
+        //        {
+        //            nombre = "@formaPagoID",
+        //            valor = invoice.paymentMethod.FormaPagoID
+        //        },
+        //        new ParameterSP()
+        //        {
+        //            nombre = "@cliente",
+        //            valor = invoice.Cliente
+        //        }
+
+        //    };
+        //    return DataHelper.GetInstance().ExcecuteSPCatchInt("SP_GUARDAR_FACTURA", parameters);
+        //}
     }
 }
