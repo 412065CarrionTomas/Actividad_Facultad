@@ -6,35 +6,46 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Identity.Client.Extensibility;
+using Actividad_Facultad.Data;
+using System.IO.Pipes;
 
 namespace Actividad_Facultad.Service
 {
     public class ArticleService
     {
-        private IArticleRepository _ArticleRepository;
-
-        public ArticleService()
+        //AGREGAR VARIABLE CLASE DE LA CLASE
+        private readonly IUnitOfWork _unitOfWork;
+        //INYECCION DE DEPENDENCIAS
+        public ArticleService(IUnitOfWork unitOfWork)
         {
-            _ArticleRepository = new ArticleRepository();
+            _unitOfWork = unitOfWork;
         }
 
-        public List<Article> GetArticles()
+        //LOGICA DE NEGOCIO
+        public List<Article> GetArticlesLts()
         {
-            return _ArticleRepository.GetAll();
+            List<Article> lts = _unitOfWork.ArticleRepository.GetAll();
+            return lts;
+        }
+        public Article GetArticle(int id)
+        {
+            Article a = _unitOfWork.ArticleRepository.GetById(id);
+            return a;
+        }
+        public int DeleteArticle(int id)
+        {
+            int result = _unitOfWork.ArticleRepository.Delete(id);
+            _unitOfWork.Commit();
+            return result;
+        }
+        public int SaveArticle(Article a)
+        {
+            int result = _unitOfWork.ArticleRepository.Save(a);
+            _unitOfWork.Commit();
+            return result;
         }
 
-        public Article? GetArticleById(int id)
-        {
-            return _ArticleRepository.GetById(id);
-        }
 
-        public int articleSave(Article article1)
-        {
-            return _ArticleRepository.Save(article1);
-        }
-        public int articleDelete(int id)
-        {
-            return _ArticleRepository.Delete(id);
-        }
     }
 }

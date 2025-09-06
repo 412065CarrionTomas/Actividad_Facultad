@@ -1,4 +1,5 @@
 ﻿using Actividad_Facultad.Data.Interfaces;
+using Actividad_Facultad.Data.Utils;
 using Actividad_Facultad.Domain;
 using Azure.Core;
 using System;
@@ -10,8 +11,15 @@ using System.Threading.Tasks;
 
 namespace Actividad_Facultad.Data.Implement
 {
-    public class PaymentMethodRepository : IPaymentMethod
+    public class PaymentMethodRepository : IGenericRepository<PaymentMethod>
     {
+        //AGREGAR VARIABLE CLASE DE LA CLASE
+        private IUnitOfWork? _unitOfWork;
+        //DI
+        public PaymentMethodRepository(IUnitOfWork unitOfWork)
+        {
+            _unitOfWork = unitOfWork;
+        }
         public int Delete(int id)
         {
             List<ParameterSP> parameters = new List<ParameterSP>()
@@ -22,27 +30,27 @@ namespace Actividad_Facultad.Data.Implement
                     valor = id
                 }
             };
-            return DataHelper.GetInstance().ExecuteSPNoQuery("sp_FormaPago_Delete", parameters);
+            return _unitOfWork.ExecuteSPNonQuery("sp_FormaPago_Delete", parameters);
             
         }
 
         public List<PaymentMethod> GetAll()
         {
             List<PaymentMethod> paymentMethods = new List<PaymentMethod>();
-            var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_FormaPago_Get");
+            var dt = _unitOfWork.ExecuteSPQuery("sp_FormaPago_Get");
             foreach(DataRow row in dt.Rows)
             {
                 PaymentMethod pm = new PaymentMethod()
                 {
                     FormaPagoID = (int)row["formaPagoID"],
-                    Descripcion = (string)row["descripcion"]
+                    nombreFormaPago = (string)row["nombreFormaPago"]
                 };
                 paymentMethods.Add(pm);
             }
             return paymentMethods;
         }
 
-        public PaymentMethod GetById(int id)
+        public PaymentMethod? GetById(int id)
         {
             List<ParameterSP> parameters = new List<ParameterSP>()
             {
@@ -52,12 +60,12 @@ namespace Actividad_Facultad.Data.Implement
                     valor = id
                 }
             };
-            var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_FormaPago_Get", parameters);
+            var dt = _unitOfWork.ExecuteSPQuery("sp_FormaPago_Get", parameters);
             if(dt !=null && dt.Rows.Count > 0)
             {
                 PaymentMethod pm = new PaymentMethod();
                 pm.FormaPagoID = (int)dt.Rows[0]["formaPagoID"];
-                pm.Descripcion = (string)dt.Rows[1]["descripcion"];
+                pm.nombreFormaPago = (string)dt.Rows[1]["nombreFormaPago"];
                 return pm;
             }
             return null;
@@ -74,11 +82,11 @@ namespace Actividad_Facultad.Data.Implement
                 },
                 new ParameterSP()
                 {
-                    nombre = "@descripcion",
-                    valor = paymentMethod.Descripcion
+                    nombre = "@nombreFormaPago",
+                    valor = paymentMethod.nombreFormaPago
                 }
             };
-            return DataHelper.GetInstance().ExcecuteSPCatchInt("SP_GUARDAR_FORMAPAGO", parameters);
+            return _unitOfWork.ExecuteSPWithReturn("sp_formaPago_UPSERT", parameters);
         }
     }
 }

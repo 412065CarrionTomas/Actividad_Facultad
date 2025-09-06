@@ -9,11 +9,13 @@ namespace Actividad_Facultad.Domain
     public class Article
     {
         public int ArticuloID { get; set; }
-        public string Descripcion { get; set; }
+        public string NombreArticulo { get; set; }
+
+        public Decimal PrecioUnitario { get; set; }
 
         public override string ToString()
         {
-            return $"Codigo: {ArticuloID}, Nombre: {Descripcion}";
+            return $"Codigo: {ArticuloID}, Nombre: {NombreArticulo}, Precio Unitario: {PrecioUnitario}";
         }
     }
 }

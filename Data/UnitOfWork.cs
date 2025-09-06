@@ -9,14 +9,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data;
+using Actividad_Facultad.Data.Utils;
 
 namespace Actividad_Facultad.Data
 {
-    public class UnitOfWork : IDisposable
+    public class UnitOfWork : IUnitOfWork, IDisposable
     {
         private readonly SqlConnection _connection;
         private SqlTransaction _transaction;
-        private InvoiceRepository _InvoiceRepository;
+        private InvoiceRepository? _InvoiceRepository;
+        private InvoiceDetailRepository? _InvoiceDetailRepository;
+        private ArticleRepository? _ArticleRepository;
+        private PaymentMethodRepository? _PaymentMethodRepository;
 
         public UnitOfWork()
         {
@@ -25,49 +29,77 @@ namespace Actividad_Facultad.Data
             _transaction = _connection.BeginTransaction();
         }
 
-        public IInvoiceRepository InvoiceRepository
+        //INSTANCIAS DE CADA REPO COMO PROPIEDADES (lazy initialization)
+        public IGenericRepository<Invoice>? InvoiceRepository
         {
             get
             {
                 if(_InvoiceRepository == null)
                 {
-                    _InvoiceRepository = new InvoiceRepository(_connection, _transaction);
+                    _InvoiceRepository = new InvoiceRepository(this);
                 }
                 return _InvoiceRepository;
             }
         }
+        public IGenericRepository<InvoiceDetail>? InvoicesDetailRepository
+        {
+            get
+            {
+                if(_InvoiceDetailRepository  == null)
+                {
+                    _InvoiceDetailRepository = new InvoiceDetailRepository(this);
+                }
+                return _InvoiceDetailRepository;
+            }
+        }
+        public IGenericRepository<Article>? ArticleRepository
+        {
+            get
+            {
+                if(_ArticleRepository == null)
+                {
+                    _ArticleRepository = new ArticleRepository(this);
+                }
+                return _ArticleRepository;
+            }
+        }
+
+        public IGenericRepository<PaymentMethod>? PaymentMethodRepository
+        {
+            get
+            {
+                if(_PaymentMethodRepository == null)
+                {
+                    _PaymentMethodRepository = new PaymentMethodRepository(this);
+                }
+                return _PaymentMethodRepository;
+            }
+        }
 
         //TRANSACCION CON OUTPUT
-        public int SaveChangesWithOutput(string sp, List<ParameterSP>? parameterSPs, string outPutName)
+        public int SaveChangesWhitOutput(string sp, string paramOutput, List<ParameterSP>? parameters = null)
         {
             int result = -1;
             try
             {
-                using (var cmdMaestro = new SqlCommand(sp, _connection, _transaction))
+                using var cmd = new SqlCommand(sp, _connection, _transaction) 
+                { CommandType = CommandType.StoredProcedure };
+                AddParameters(cmd, parameters);
+                var uotp = new SqlParameter()
                 {
-                    cmdMaestro.CommandType = CommandType.StoredProcedure;
-                    if (parameterSPs != null)
-                    {
-                        foreach (ParameterSP param in parameterSPs)
-                        {
-                            cmdMaestro.Parameters.AddWithValue(param.nombre, param.valor);
-                        }
-                    }
-                    var idOutput = new SqlParameter()
-                    {
-                        ParameterName = outPutName,
-                        Direction = ParameterDirection.Output,
-                        DbType = DbType.Int32
-                    };
-                    cmdMaestro.Parameters.Add(idOutput);
-                    cmdMaestro.ExecuteNonQuery();
-                    var idVariable = (int)idOutput.Value;
-                    if(idOutput.Value != DBNull.Value)
-                    {
-                        return idVariable;
-                    }
-                    else { return -1; }
+                    ParameterName = paramOutput,
+                    Direction = ParameterDirection.Output,
+                    DbType = DbType.Int32
+                };
+                cmd.Parameters.Add(uotp);
+                cmd.ExecuteNonQuery();
+                var idVariable = (int)uotp.Value;
+                if(uotp.Value != DBNull.Value)
+                {
+                    return idVariable;
                 }
+                else { return -1; }
+                
             }
             catch (Exception)
             {
@@ -76,24 +108,15 @@ namespace Actividad_Facultad.Data
         }
 
         //TRANSACCION SIN DEVOLUCION
-        public int SaveChanges(string sp, List<ParameterSP>? parameters)
+        public int SaveChanges(string sp, List<ParameterSP>? parameters = null)
         {
             int result = -1;
             try
             {
-                using(var cmdAlumno = new SqlCommand(sp, _connection, _transaction))
-                {
-                    cmdAlumno.CommandType = CommandType.StoredProcedure;
-                    if(parameters != null)
-                    {
-                        foreach(ParameterSP param in parameters)
-                        {
-                            cmdAlumno.Parameters.AddWithValue(param.nombre, param.valor);
-                        }
-                    }
-                    result = cmdAlumno.ExecuteNonQuery();
-
-                }
+                using var cmd = new SqlCommand(sp, _connection, _transaction)
+                { CommandType = CommandType.StoredProcedure };
+                AddParameters(cmd, parameters);
+                result = cmd.ExecuteNonQuery();
             }
             catch (Exception)
             {
@@ -101,6 +124,86 @@ namespace Actividad_Facultad.Data
             }
             return result;
         }
+        //DML
+        //LECTURA DE DATOS EN TABLA
+        public DataTable ExecuteSPQuery(string sp, List<ParameterSP>? parameters = null)
+        {
+            DataTable dt = new DataTable();
+            try
+            {
+                using var cmd = new SqlCommand(sp, _connection, _transaction)
+                { CommandType = CommandType.StoredProcedure };
+                AddParameters(cmd, parameters);
+                dt.Load(cmd.ExecuteReader());
+            }
+            catch (SqlException ex)
+            {
+                dt = null;
+                Console.WriteLine("Error SQL: " + ex.Message);
+                throw;
+            }
+            return dt;
+        }
+        //DEVOLUCION DE RETURN - UTIL PARA SP DE SAVE O INSERT - UPSERT
+        public int ExecuteSPWithReturn(string sp, List<ParameterSP>? parameters = null)
+        {
+            int result = -1;
+            try
+            {
+                using var cmd = new SqlCommand(sp, _connection, _transaction)
+                { CommandType = CommandType.StoredProcedure };
+                AddParameters(cmd, parameters);
+                //capturar valor de retorno
+                var returnParameter = new SqlParameter
+                {
+                    Direction = ParameterDirection.ReturnValue,
+                    SqlDbType = SqlDbType.Int
+                };
+                cmd.Parameters.Add(returnParameter);
+                cmd.ExecuteNonQuery();
+                result = (int)returnParameter.Value;
+            }
+            catch (SqlException ex)
+            {
+                result = -1;
+                Console.WriteLine("Error SQL: " + ex.Message);
+            }
+            return result;
+        }
+        //EJECUTAR DEVOLVIENDO FILAS AFECTAS - VALOR DE RETONRO INT DE CONFIRMACION
+        public int ExecuteSPNonQuery(string sp, List<ParameterSP>? parameters = null)
+        {
+            int resultado = 0;
+            try
+            {
+                using var cmd = new SqlCommand(sp, _connection, _transaction)
+                { CommandType = CommandType.StoredProcedure };
+                AddParameters(cmd, parameters);
+                resultado = cmd.ExecuteNonQuery();
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine("Error SQL: " + ex.Message);
+                resultado = 0;
+            }
+            return resultado;
+        }
+        //METODO PARA AGREGAR LIST DE PARAMETROS
+        private static void AddParameters(SqlCommand cmd, List<ParameterSP>? parameters = null)
+        {
+            if (parameters == null)
+            {
+                return;
+            }
+            else
+            {
+                foreach(ParameterSP param in parameters)
+                {
+                    cmd.Parameters.AddWithValue(param.nombre, param.valor);
+                }
+            }
+        }
+
 
         public void Dispose()
         {

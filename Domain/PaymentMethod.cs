@@ -9,6 +9,11 @@ namespace Actividad_Facultad.Domain
     public class PaymentMethod
     {
         public int FormaPagoID { get; set; }
-        public string Descripcion { get; set; }
+        public string nombreFormaPago { get; set; }
+
+        public override string ToString()
+        {
+            return $"Forma de pago ID:{FormaPagoID}, Nombre forma de pago: {nombreFormaPago}";
+        }
     }
 }

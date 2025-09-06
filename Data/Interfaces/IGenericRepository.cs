@@ -1,5 +1,4 @@
-﻿using Actividad_Facultad.Domain;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Actividad_Facultad.Data.Interfaces
 {
-    public interface IArticleRepository
+    public interface IGenericRepository<Tentity> where Tentity : class
     {
-        List<Article> GetAll();
-        Article GetById(int id);
-        int Save(Article article);
+        List<Tentity> GetAll();
+        Tentity GetById(int id);
+        int Save(Tentity entity);
         int Delete(int id);
     }
 }

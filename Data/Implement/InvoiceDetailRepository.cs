@@ -1,17 +1,28 @@
 ﻿using Actividad_Facultad.Data.Interfaces;
+using Actividad_Facultad.Data.Utils;
 using Actividad_Facultad.Domain;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Net.Quic;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Actividad_Facultad.Data.Implement
 {
-    public class InvoiceDetailRepository : IInvoiceDetailsRepository
+    public class InvoiceDetailRepository : IGenericRepository<InvoiceDetail>
     {
+        //AGREGAR VARIABLE CLASE DE LA CLASE
+        private IUnitOfWork? _unitOfWork;
+
+        //CONSTRUCTOR DI
+        public InvoiceDetailRepository(IUnitOfWork unitOfWork)
+        {
+            _unitOfWork = unitOfWork;
+        }
         public int Delete(int id)
         {
             List<ParameterSP> parameters = new List<ParameterSP>()
@@ -22,14 +33,14 @@ namespace Actividad_Facultad.Data.Implement
                     valor = id
                 }
             };
-            return DataHelper.GetInstance().ExecuteSPNoQuery("sp_DetalleFactura_Delete", parameters);
+            return _unitOfWork.ExecuteSPNonQuery("sp_DetalleFactura_Delete", parameters);
             
         }
 
         public List<InvoiceDetail> GetAll()
         {
             List<InvoiceDetail> invoiceDetails = new List<InvoiceDetail>();
-            var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_DetalleFactura_Get");
+            var dt = _unitOfWork.ExecuteSPQuery("sp_DetalleFactura_Get");
             foreach(DataRow row in dt.Rows)
             {
                 InvoiceDetail i = new InvoiceDetail()
@@ -47,7 +58,7 @@ namespace Actividad_Facultad.Data.Implement
             return invoiceDetails;
         }
 
-        public InvoiceDetail GetById(int id)
+        public InvoiceDetail? GetById(int id)
         {
             List<ParameterSP> parameters = new List<ParameterSP>()
             {
@@ -57,18 +68,18 @@ namespace Actividad_Facultad.Data.Implement
                     valor = id
                 }
             };
-            var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_DetalleFactura_Get", parameters);
+            var dt = _unitOfWork.ExecuteSPQuery("sp_DetalleFactura_Get", parameters);
             if(dt != null && dt.Rows.Count > 0)
             {
                 InvoiceDetail invoiceDetail = new InvoiceDetail()
                 {
                     nroDetalle = (int)dt.Rows[0]["nroDetalle"],
-                    nroFactura = (int)dt.Rows[1]["nroFactura"],
+                    nroFactura = (int)dt.Rows[0]["nroFactura"],
                     article = new Article()
                     {
-                        ArticuloID = (int)dt.Rows[2]["articuloID"]
+                        ArticuloID = (int)dt.Rows[0]["articuloID"]
                     },
-                    cantidad = (int)dt.Rows[3]["cantidadID"]
+                    cantidad = (int)dt.Rows[0]["cantidad"]
                 };
                 return invoiceDetail;
             }
@@ -100,7 +111,7 @@ namespace Actividad_Facultad.Data.Implement
                     valor = invoiceDetail.cantidad
                 }
             };
-            return DataHelper.GetInstance().ExcecuteSPCatchInt("SP_GUARDAR_DETALLEFACTURA", parameters);
+            return _unitOfWork.ExecuteSPWithReturn("sp_DetalleFactura_UPSERT", parameters);
         }
     }
 }

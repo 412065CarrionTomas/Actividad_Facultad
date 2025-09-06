@@ -1,4 +1,5 @@
 ﻿using Actividad_Facultad.Data.Interfaces;
+using Actividad_Facultad.Data.Utils;
 using Actividad_Facultad.Domain;
 using System;
 using System.Collections.Generic;
@@ -9,8 +10,15 @@ using System.Threading.Tasks;
 
 namespace Actividad_Facultad.Data.Repositories
 {
-    internal class ArticleRepository : IArticleRepository
+    public class ArticleRepository : IGenericRepository<Article>
     {
+        //AGREGAR VARIABLE CLASE DE LA CLASE
+        private IUnitOfWork _unitOfWork;
+        //DI
+        public ArticleRepository(IUnitOfWork unitOfWork)
+        {
+            _unitOfWork = unitOfWork;
+        }
         public int Delete(int id)
         {
             List<ParameterSP> parameters = new List<ParameterSP>()
@@ -22,19 +30,20 @@ namespace Actividad_Facultad.Data.Repositories
                 }
             };
 
-            return DataHelper.GetInstance().ExecuteSPNoQuery("sp_Articulo_Delete", parameters);
+            return _unitOfWork.ExecuteSPNonQuery("sp_Articulo_Delete", parameters);
             
         }
 
         public List<Article> GetAll()
         {
             List<Article> article = new List<Article>();
-            var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_Articulo_Get");
+            var dt = _unitOfWork.ExecuteSPQuery("sp_Articulo_Get");
             foreach(DataRow row in dt.Rows)
             {
                 Article a = new Article();
-                a.ArticuloID = (int)row[0];
-                a.Descripcion = (string)row[1];
+                a.ArticuloID = (int)row["articuloID"];
+                a.NombreArticulo = (string)row["nombreArticulo"];
+                a.PrecioUnitario = (decimal)row["precioUnitario"];
                 article.Add(a);
             }
             return article;
@@ -51,12 +60,13 @@ namespace Actividad_Facultad.Data.Repositories
                     valor = id
                 }
             };
-            var dt = DataHelper.GetInstance().ExcecuteSPQuery("sp_Articulo_Get", parameters);
+            var dt = _unitOfWork.ExecuteSPQuery("sp_Articulo_Get", parameters);
             if(dt != null && dt.Rows.Count > 0)
             {
                 Article a = new Article();
                 a.ArticuloID = (int)dt.Rows[0]["articuloID"];
-                a.Descripcion = (string)dt.Rows[0]["descripcion"];
+                a.NombreArticulo = (string)dt.Rows[0]["nombreArticulo"];
+                a.PrecioUnitario = (decimal)dt.Rows[0]["precioUnitario"];
                 return a;
             }
             return null;
@@ -73,11 +83,16 @@ namespace Actividad_Facultad.Data.Repositories
                 },
                 new ParameterSP()
                 {
-                    nombre = "@descripcion",
-                    valor = article.Descripcion
+                    nombre = "@nombreArticulo",
+                    valor = article.NombreArticulo
+                },
+                new ParameterSP()
+                {
+                    nombre = "@precioUnitario",
+                    valor = article.PrecioUnitario
                 }
             };
-            return DataHelper.GetInstance().ExcecuteSPCatchInt("SP_GUARDAR_ARTICULO", parameters);
+            return _unitOfWork.ExecuteSPWithReturn("sp_articulo_UPSERT", parameters);
         }
     }
 }
